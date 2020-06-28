@@ -73,7 +73,8 @@ class Products with ChangeNotifier {
   // }
 
   Future<void> fetchAndSetProducts() async {
-    final url = 'https://teste-6c819.firebaseio.com/products.json?auth=$authToken';
+    final url =
+        'https://teste-6c819.firebaseio.com/products.json?auth=$authToken';
 
     try {
       print('Getting products...');
@@ -81,7 +82,7 @@ class Products with ChangeNotifier {
       print(response.body);
       final extractedData = jsonDecode(response.body) as Map<String, dynamic>;
       final List<Product> loadedProducts = [];
-      if (extractedData == null){
+      if (extractedData == null) {
         return;
       }
       extractedData.forEach((productId, productData) {
@@ -101,7 +102,8 @@ class Products with ChangeNotifier {
   }
 
   Future<void> addProduct(Product product) async {
-    const url = 'https://teste-6c819.firebaseio.com/products.json';
+    final url =
+        'https://teste-6c819.firebaseio.com/products.json?auth=$authToken';
     try {
       final response = await http.post(
         url,
@@ -132,7 +134,8 @@ class Products with ChangeNotifier {
   Future<void> updateProduct(String id, Product newProduct) async {
     final prodIndex = _items.indexWhere((prod) => prod.id == id);
     if (prodIndex >= 0) {
-      final url = 'https://teste-6c819.firebaseio.com/products/$id.json';
+      final url =
+          'https://teste-6c819.firebaseio.com/products/$id.json?auth=$authToken';
       await http.patch(url,
           body: json.encode({
             'title': newProduct.title,
@@ -149,7 +152,8 @@ class Products with ChangeNotifier {
   }
 
   Future<void> deleteProduct(String id) async {
-    final url = 'https://teste-6c819.firebaseio.com/products/$id.json';
+    final url =
+        'https://teste-6c819.firebaseio.com/products/$id.json?auth=$authToken';
     final existingProductIndex = _items.indexWhere((prod) => prod.id == id);
     var existingProduct = _items[existingProductIndex];
     _items.removeAt(existingProductIndex);
