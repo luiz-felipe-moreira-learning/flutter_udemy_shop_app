@@ -40,12 +40,15 @@ class Products with ChangeNotifier {
   //   notifyListeners();
   // }
 
-  Future<void> fetchAndSetProducts() async {
+  Future<void> fetchAndSetProducts([bool filterByUser = false]) async {
+    final filterString =
+        filterByUser ? 'orderBy="creatorId"&equalTo="$userId"' : '';
     var url =
-        'https://teste-6c819.firebaseio.com/products.json?auth=$authToken';
+        'https://teste-6c819.firebaseio.com/products.json?auth=$authToken&$filterString';
 
     try {
       print('Getting products...');
+      print('Request URL: $url');
       final response = await http.get(url);
       print(response.body);
       final extractedData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -88,6 +91,7 @@ class Products with ChangeNotifier {
           'description': product.description,
           'imageUrl': product.imageUrl,
           'price': product.price,
+          'creatorId': userId,
         }),
       );
       final newProduct = Product(
