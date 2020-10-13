@@ -105,45 +105,59 @@ class _AuthCardState extends State<AuthCard>
   var _isLoading = false;
   final _passwordController = TextEditingController();
   AnimationController _controller;
-  Animation<Size> _heightAnimation;
+  Animation<Offset> _slideAnimation;
+  Animation<double> _opacityAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this,
-        duration: Duration(
-          milliseconds: 300,
-        ));
-    _heightAnimation = Tween<Size>(
-            begin: Size(double.infinity, 260), end: Size(double.infinity, 320))
-        .animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.fastOutSlowIn,
-    ));
+      vsync: this,
+      duration: Duration(
+        milliseconds: 300,
+      ),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0, -1.5),
+      end: Offset(0, 0),
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.fastOutSlowIn,
+      ),
+    );
+    _opacityAnimation = Tween(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeIn,
+      ),
+    );
     // _heightAnimation.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
+    // TODO: implement dispose
     super.dispose();
     _controller.dispose();
   }
 
   void _showErrorDialog(String message) {
     showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-              title: Text('An error occurred!'),
-              content: Text(message),
-              actions: <Widget>[
-                FlatButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text('Okay')),
-              ],
-            ));
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('An Error Occurred!'),
+        content: Text(message),
+        actions: <Widget>[
+          FlatButton(
+            child: Text('Okay'),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+          )
+        ],
+      ),
+    );
   }
 
   Future<void> _submit() async {
@@ -171,22 +185,24 @@ class _AuthCardState extends State<AuthCard>
       }
     } on HttpException catch (error) {
       var errorMessage = 'Authentication failed';
-      if (error.message.contains('EMAIL_EXISTS')) {
-        errorMessage = 'This email already exists.';
-      } else if (error.message.contains('INVAID_EMAIL')) {
-        errorMessage = 'This is not a valid email.';
-      } else if (error.message.contains('WEAK_PASSWORD')) {
+      if (error.toString().contains('EMAIL_EXISTS')) {
+        errorMessage = 'This email address is already in use.';
+      } else if (error.toString().contains('INVALID_EMAIL')) {
+        errorMessage = 'This is not a valid email address';
+      } else if (error.toString().contains('WEAK_PASSWORD')) {
         errorMessage = 'This password is too weak.';
-      } else if (error.message.contains('EMAIL_NOT_FOUND')) {
+      } else if (error.toString().contains('EMAIL_NOT_FOUND')) {
         errorMessage = 'Could not find a user with that email.';
-      } else if (error.message.contains('INVALID_PASSWORD')) {
+      } else if (error.toString().contains('INVALID_PASSWORD')) {
         errorMessage = 'Invalid password.';
       }
       _showErrorDialog(errorMessage);
     } catch (error) {
-      const errorMessage = 'Could not authenticate. Please try again later.';
+      const errorMessage =
+          'Could not authenticate you. Please try again later.';
       _showErrorDialog(errorMessage);
     }
+
     setState(() {
       _isLoading = false;
     });
@@ -253,19 +269,33 @@ class _AuthCardState extends State<AuthCard>
                     _authData['password'] = value;
                   },
                 ),
-                if (_authMode == AuthMode.Signup)
-                  TextFormField(
-                    enabled: _authMode == AuthMode.Signup,
-                    decoration: InputDecoration(labelText: 'Confirm Password'),
-                    obscureText: true,
-                    validator: _authMode == AuthMode.Signup
-                        ? (value) {
-                            if (value != _passwordController.text) {
-                              return 'Passwords do not match!';
-                            }
-                          }
-                        : null,
+                AnimatedContainer(
+                  constraints: BoxConstraints(
+                    minHeight: _authMode == AuthMode.Signup ? 60 : 0,
+                    maxHeight: _authMode == AuthMode.Signup ? 120 : 0,
                   ),
+                  duration: Duration(milliseconds: 300),
+                  curve: Curves.easeIn,
+                  child: FadeTransition(
+                    opacity: _opacityAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: TextFormField(
+                        enabled: _authMode == AuthMode.Signup,
+                        decoration:
+                            InputDecoration(labelText: 'Confirm Password'),
+                        obscureText: true,
+                        validator: _authMode == AuthMode.Signup
+                            ? (value) {
+                                if (value != _passwordController.text) {
+                                  return 'Passwords do not match!';
+                                }
+                              }
+                            : null,
+                      ),
+                    ),
+                  ),
+                ),
                 SizedBox(
                   height: 20,
                 ),
